@@ -28,6 +28,7 @@ class User(Base):
     full_name = Column(String)
     username = Column(String, unique=True)
     password = Column(String, nullable=False)
+    role = Column(String, default="user")
     created_at = Column(DateTime, default=datetime.datetime.now())
 
 

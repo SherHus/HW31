@@ -1,10 +1,11 @@
 import json
 
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Depends
 
 from starlette.responses import Response
-from pkg.services import task as task_service
 
+from pkg.controllers.user import get_current_user, TokenPayload
+from pkg.services import task as task_service
 from schemas.task import TaskSchema
 
 router = APIRouter()
@@ -19,8 +20,12 @@ router:
 
 
 @router.get("/tasks", summary="Get all tasks", tags=["tasks"])
-def get_all_tasks(response: Response):
-    user_id = 1
+def get_all_tasks(response: Response, payload: TokenPayload = Depends(get_current_user)):
+    """
+        Возвращает все задачи пользователя. Токен авторизации должен быть передан в заголовке.
+    """
+
+    user_id = payload.id
     tasks = task_service.get_all_tasks(user_id)
     response.status_code = status.HTTP_200_OK
     response.headers["Content-Type"] = "application/json"
@@ -28,15 +33,15 @@ def get_all_tasks(response: Response):
 
 
 @router.get("/tasks/deleted", summary="Get all deleted tasks", tags=["tasks"])
-def get_all_deleted_tasks():
-    user_id = 1
+def get_all_deleted_tasks(payload: TokenPayload = Depends(get_current_user)):
+    user_id = payload.id
     tasks = task_service.get_all_deleted_tasks(user_id)
     return tasks
 
 
 @router.get("/tasks/{task_id}", summary="Get task by ID", tags=["tasks"])
-def get_task_by_id(task_id: int):
-    user_id = 1
+def get_task_by_id(task_id: int, payload: TokenPayload = Depends(get_current_user)):
+    user_id = payload.id
     task = task_service.get_task_by_id(user_id, task_id)
     if task is None:
         return Response(json.dumps({'error': 'task not found'}), status.HTTP_404_NOT_FOUND)
@@ -44,8 +49,8 @@ def get_task_by_id(task_id: int):
 
 
 @router.post("/tasks", summary="Create new task", tags=["tasks"])
-def create_task(task: TaskSchema):
-    user_id = 1
+def create_task(task: TaskSchema, payload: TokenPayload = Depends(get_current_user)):
+    user_id = payload.id
     task_service.create_task(user_id, task)
 
     return Response(json.dumps({'message': 'successfully added new task'}), status_code=201,
@@ -61,8 +66,8 @@ def create_task(task: TaskSchema):
 # "7. Корзина (вывод удаленных задач)"
 
 @router.put("/tasks/{task_id}", summary="Update task by ID", tags=["tasks"])
-def update_task(task_id: int, task: TaskSchema):
-    user_id = 1
+def update_task(task_id: int, task: TaskSchema, payload: TokenPayload = Depends(get_current_user)):
+    user_id = payload.id
     task = task_service.edit_task(user_id, task_id, task)
     if task is None:
         return Response(json.dumps({'error': 'task not found'}), status.HTTP_404_NOT_FOUND)
@@ -71,8 +76,8 @@ def update_task(task_id: int, task: TaskSchema):
 
 
 @router.delete("/tasks/{task_id}", summary="Delete task by ID", tags=["tasks"])
-def delete_task(task_id: int):
-    user_id = 1
+def delete_task(task_id: int, payload: TokenPayload = Depends(get_current_user)):
+    user_id = payload.id
     task = task_service.soft_delete_task(user_id, task_id)
     if task is None:
         return Response(json.dumps({'error': 'task not found'}), status.HTTP_404_NOT_FOUND)
@@ -81,8 +86,8 @@ def delete_task(task_id: int):
 
 
 # @router.delete("/tasks/{task_id}", summary="Delete task by ID", tags=["tasks"])
-# def delete_task(task_id: int):
-#     user_id = 1
+# def delete_task(task_id: int, payload: TokenPayload = Depends(get_current_user)):
+#     user_id = payload.id
 #     task = task_service.hard_delete_task(user_id, task_id)
 #     if task is None:
 #         return Response(json.dumps({'error': 'task not found'}), status.HTTP_404_NOT_FOUND)
@@ -91,8 +96,8 @@ def delete_task(task_id: int):
 
 
 @router.patch("/tasks/{task_id}/status", summary="Update task status by ID", tags=["tasks"])
-def update_task_status(task_id: int, is_done: bool):
-    user_id = 1
+def update_task_status(task_id: int, is_done: bool, payload: TokenPayload = Depends(get_current_user)):
+    user_id = payload.id
     task = task_service.change_task_status(user_id, task_id, is_done)
     if task is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-
+from sqlalchemy.orm import joinedload
 from db.postgres import engine
 from db.models import Task
 
