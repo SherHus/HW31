@@ -103,4 +103,3 @@ def update_task_status(task_id: int, is_done: bool, payload: TokenPayload = Depe
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     return Response(json.dumps({'task_id': task.id, 'is_done': task.is_done}), status_code=status.HTTP_200_OK)
-
